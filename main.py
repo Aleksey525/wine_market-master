@@ -3,36 +3,45 @@ from jinja2 import Environment, FileSystemLoader, select_autoescape
 import pandas
 from auxiliary_functions import get_delta_years, get_word_chape
 from collections import defaultdict
-
-env = Environment(
-    loader=FileSystemLoader('.'),
-    autoescape=select_autoescape(['html', 'xml'])
-)
-
-template = env.get_template('template.html')
-
-delta_years = get_delta_years()
-word_chape = get_word_chape(delta_years)
-
-column = pandas.read_excel('wine3.xlsx', sheet_name='Лист1')
-column_headings = (list(column.columns.ravel()))
-excel_data_df = pandas.read_excel('wine3.xlsx', sheet_name='Лист1', usecols=column_headings,
-                                  keep_default_na=False)
-description_drinks = excel_data_df.to_dict(orient='records')
-# categories = sorted(list(dict.fromkeys(excel_data_df['Категория'].tolist())))
-categories = sorted(excel_data_df['Категория'].tolist())
-complete_categories = defaultdict(list, {cat: [wine for wine in description_drinks
-                                               if wine['Категория'] == cat] for cat in categories})
-
-rendered_page = template.render(
-    age=f'{delta_years}',
-    word_chape=f'{word_chape}',
-    wines=complete_categories
-)
-
-with open('index.html', 'w', encoding="utf8") as file:
-    file.write(rendered_page)
+import argparse
 
 
-server = HTTPServer(('0.0.0.0', 8000), SimpleHTTPRequestHandler)
-server.serve_forever()
+def main():
+    parser = argparse.ArgumentParser(
+        description='Скрипт для запуска сайта'
+    )
+    parser.add_argument('--path', default='wine3.xlsx', type=str, help='input path')
+    args = parser.parse_args()
+
+    env = Environment(
+        loader=FileSystemLoader('.'),
+        autoescape=select_autoescape(['html', 'xml'])
+    )
+
+    template = env.get_template('template.html')
+
+    years_delta = get_delta_years()
+    word_chape = get_word_chape(years_delta)
+
+    column = pandas.read_excel(args.path, sheet_name='Лист1', keep_default_na=False)
+    description_drinks = column.to_dict(orient='records')
+    categories = sorted(column['Категория'].tolist())
+    complete_categories = defaultdict(list, {cat: [wine for wine in description_drinks
+                                                   if wine['Категория'] == cat] for cat in categories})
+
+    rendered_page = template.render(
+        age=f'{years_delta}',
+        word_chape=f'{word_chape}',
+        wines=complete_categories
+    )
+
+    with open('index.html', 'w', encoding="utf8") as file:
+        file.write(rendered_page)
+
+
+    server = HTTPServer(('0.0.0.0', 8000), SimpleHTTPRequestHandler)
+    server.serve_forever()
+
+
+if __name__ == '__main__':
+    main()
