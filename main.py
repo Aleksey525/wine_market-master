@@ -5,6 +5,9 @@ from auxiliary_functions import get_delta_years, get_word_chape
 from collections import defaultdict
 import argparse
 
+server = HTTPServer(('0.0.0.0', 8000), SimpleHTTPRequestHandler)
+server.serve_forever()
+
 
 def main():
     parser = argparse.ArgumentParser(
@@ -41,7 +44,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-
-server = HTTPServer(('0.0.0.0', 8000), SimpleHTTPRequestHandler)
-server.serve_forever()
